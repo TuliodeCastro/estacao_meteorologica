@@ -1,0 +1,74 @@
+# ═══════════════════════════════════════════════════════════════════
+# .gitignore - Estação Meteorológica
+# ═══════════════════════════════════════════════════════════════════
+
+# ─── IDE e Editor ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ─── PlatformIO ──────────────────────────────────────────────────────
+.pio/
+.pio
+.env
+.venv
+
+# ─── Build e Compilação ──────────────────────────────────────────────
+build/
+dist/
+*.o
+*.a
+*.so
+*.dll
+*.dylib
+*.exe
+
+# ─── Credenciais e Configurações Sensíveis ──────────────────────────
+**/credentials.h        # Nunca commit credenciais reais
+**/config.local.h       # Configurações locais
+*.secret.*              # Padrão genérico para arquivos sensíveis
+*.key
+*.pem
+.env.local
+.env.*.local
+
+# ─── Logs e Temporários ─────────────────────────────────────────────
+*.log
+*.tmp
+*.temp
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# ─── Sistema Operacional ────────────────────────────────────────────
+Thumbs.db
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ─── Arquivos de Projeto Python (se aplicável) ──────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ─── Dependências ────────────────────────────────────────────────────
+/lib/
+/include/
+# EXCETO credenciais
+!/firmware/gateway_lora/include/credentials.h.example
+!/firmware/node_sensor/include/
+
+# ─── Gerados automaticamente ────────────────────────────────────────
+*.bak
+*.backup
+*~
+#*#
