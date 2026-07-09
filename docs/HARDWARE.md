@@ -22,7 +22,7 @@ Documentação completa de componentes, pinagem e esquemático.
 | Componente | Modelo | Quantidade | Interface | Voltagem |
 |-----------|--------|-----------|-----------|----------|
 | Microcontrolador | NodeMCU V2 (ESP8266) | 1 | SPI/I2C | 3.3V |
-| Receptor LoRa | SX1278 (LoRa breakout) | 1 | UART | 3.3V |
+| Receptor LoRa | E220-900T22D | 1 | UART | 3.3V |
 | Conectividade | Wi-Fi (incorporado) | - | 802.11b/g/n | 3.3V |
 
 ## 🔌 Pinagem Detalhada
