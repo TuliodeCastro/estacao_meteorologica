@@ -27,40 +27,6 @@ firmware/
     ├── platformio.ini          (configuração de build)
     └── test/
 
-```
-
-## 🛠️ Build & Deploy
-
-### Pré-requisitos
-- PlatformIO no VS Code
-- Python 3.8+
-- USB drivers (CH340 para ESP8266)
-
-### Compilar
-
-```bash
-# Node Sensor
-cd firmware/node_sensor
-pio run                    # Compilar
-pio run --target upload    # Compilar + Upload
-pio run --target clean     # Limpar build
-
-# Gateway LoRa
-cd firmware/gateway_lora
-pio run
-pio run --target upload
-```
-
-### Serial Monitor
-
-```bash
-# Abrir monitor serial
-pio device monitor --baud 115200
-
-# Ou via VS Code:
-# Ctrl+Alt+S
-```
-
 ## 📊 Módulos Explicados
 
 ### Node Sensor (`node_sensor/src/main.cpp`)
@@ -155,8 +121,8 @@ Irradiância: 450.2 W/m²
 
 **Configurações Importantes:**
 ```cpp
-const char* WIFI_SSID = "LABCAM";          // Vir de credentials.h
-const char* WIFI_PASS = "labcam2020";      // Vir de credentials.h
+const char* WIFI_SSID = "O sentido da vida, do universo e tudo mais";          // Vir de credentials.h
+const char* WIFI_PASS = "42";      // Vir de credentials.h
 
 #define FIREBASE_HOST    "..."              // Firebase URL
 #define FIREBASE_API_KEY "..."              // Firebase API Key
@@ -316,5 +282,3 @@ Serial.println(analogRead(A0) / 1024.0 * 3.3);  // Apenas D1/D5 mini
 - **v1.0.0** (2026-07-09) - Versão inicial com suporte básico
 
 ---
-
-**Última atualização:** 2026-07-09
