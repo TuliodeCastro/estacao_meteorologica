@@ -7,4 +7,4 @@
 //   'https://meteorinho-proxy.SEU-SUBDOMINIO.workers.dev'
 // Deixe vazio ('') para o Meteorinho usar só o "cérebro local" (respostas
 // prontas, sem IA). O site nunca fica sem resposta de qualquer forma.
-export const URL_METEORINHO = '';
+export const URL_METEORINHO = 'https://meteorinho-proxy.estacao-ufop.workers.dev';
