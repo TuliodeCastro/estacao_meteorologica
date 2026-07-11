@@ -107,6 +107,34 @@ void enviarHeartbeat() {
   else { Serial.print("[Heartbeat] Erro: "); Serial.println(fbdo.errorReason()); }
 }
 
+// Arquiva a leitura no histórico (/estacao/historico/<epoch>), para o
+// site montar gráficos de 24 h / 7 dias. Um único setJSON por leitura,
+// indexado pelo horário (epoch em segundos) — assim o site consulta
+// faixas de tempo direto com orderByKey/startAt.
+void arquivarHistorico(float temp, float pres, float umid, int pulsos,
+                       float chuva, float velMS, float rajada,
+                       int dir, float irrad, time_t agora) {
+  if (!firebaseIniciado || !Firebase.ready() || WiFi.status() != WL_CONNECTED) return;
+
+  FirebaseJson json;
+  json.set("temp",      temp);
+  json.set("pres",      pres);
+  json.set("umid",      umid);
+  json.set("pulsos",    pulsos);
+  json.set("chuva",     chuva);
+  json.set("velMS",     velMS);
+  json.set("rajada",    rajada);
+  json.set("dir",       dir);
+  json.set("direcao",   grausParaNome(dir));
+  json.set("irrad",     irrad);
+  json.set("timestamp", (int)agora);
+
+  String path = "/estacao/historico/" + String((uint32_t)agora);
+  if (Firebase.RTDB.setJSON(&fbdo, path, &json))
+    Serial.println("[Historico] Registro arquivado!");
+  else { Serial.print("[Historico] Erro: "); Serial.println(fbdo.errorReason()); }
+}
+
 void enviarFirebase(float temp, float pres, float umid, int pulsos,
                     float chuva, float velMS, float rajada,
                     int dir, float irrad) {
@@ -133,6 +161,9 @@ void enviarFirebase(float temp, float pres, float umid, int pulsos,
 
   if (ok) Serial.println("[Firebase] Dados enviados!");
   else { Serial.print("[Firebase] Erro: "); Serial.println(fbdo.errorReason()); }
+
+  // Também guarda no histórico (indexado pelo horário da leitura)
+  arquivarHistorico(temp, pres, umid, pulsos, chuva, velMS, rajada, dir, irrad, agora);
 }
 
 // Ordem CSV: temp,pres,umid,pulsos,chuva,velMS,rajada,dir,irrad

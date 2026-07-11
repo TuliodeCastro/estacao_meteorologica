@@ -1,21 +1,26 @@
 // ============================================================
 // Meteorinho — assistente virtual da estação! ☁️
-// - Responde perguntas usando a API da Anthropic (Claude)
-//   quando disponível (window.claude.complete)
-// - Se a API não estiver disponível, usa um "cérebro local"
-//   com respostas prontas baseadas nos dados reais
+// - Responde perguntas usando a IA da NVIDIA, através de um
+//   proxy seguro (Cloudflare Worker) que guarda a chave em segredo
+//   — a URL do proxy fica em src/config.js (URL_METEORINHO)
+// - Se o proxy não estiver configurado ou falhar, usa um "cérebro
+//   local" com respostas prontas baseadas nos dados reais
 // - Teclado virtual na tela (totem não tem teclado físico)
 // - Limpa a conversa após 1 minuto sem interação (privacidade!)
 // ============================================================
 import { useEffect, useRef, useState } from 'react';
 import TecladoVirtual from './TecladoVirtual.jsx';
 import { IconeMeteorinho } from './IconesAnimados.jsx';
+import { URL_METEORINHO } from '../config.js';
 import {
   formatarNumero,
   grausParaDirecao,
   INFO_STATUS,
   descreverTempoDecorrido,
 } from '../utils/clima.js';
+
+// Tempo máximo de espera pela resposta da IA (o totem não pode travar)
+const TEMPO_LIMITE_IA = 15000;
 
 // Tempo sem interação até limpar a conversa (privacidade entre visitantes)
 const TEMPO_LIMPAR_CONVERSA = 60 * 1000;
@@ -124,31 +129,31 @@ function respostaLocal(pergunta, dados, info) {
 }
 
 // ------------------------------------------------------------
-// Pergunta ao Claude (API da Anthropic) quando disponível
+// Pergunta ao Meteorinho via proxy da NVIDIA (Cloudflare Worker).
+// O site manda só a pergunta + o contexto dos sensores; a chave da
+// NVIDIA fica em segredo no Worker (nunca no site). Se o proxy não
+// estiver configurado ou falhar, caímos no "cérebro local".
 // ------------------------------------------------------------
 async function perguntarAssistente(pergunta, dados, info) {
-  // window.claude.complete existe quando o site roda dentro de
-  // um ambiente com a API da Anthropic integrada
-  if (typeof window.claude?.complete === 'function') {
+  if (URL_METEORINHO) {
+    // Aborta se demorar demais — o totem não pode ficar travado
+    const controle = new AbortController();
+    const relogio = setTimeout(() => controle.abort(), TEMPO_LIMITE_IA);
     try {
-      const prompt = `Você é o Meteorinho, uma nuvem simpática e divertida, mascote da estação meteorológica IoT construída por estudantes de Engenharia de Controle e Automação da UFOP (Ouro Preto, MG, altitude 1.179 m).
-
-Regras:
-- Responda em português do Brasil, em até 4 frases curtas.
-- Tom divertido e didático, acessível para crianças e adultos.
-- Use os dados reais abaixo quando fizer sentido.
-- A velocidade do vento é uma MÉDIA de 2 minutos (norma OMM); a rajada é o pico de 3 s.
-- A estação funciona a energia solar e "dorme" entre medições, por isso os dados chegam a cada ~5 min.
-- Use no máximo 2 emojis.
-- Nunca invente previsões precisas; você observa o presente.
-
-Dados atuais dos sensores: ${montarContexto(dados, info)}
-
-Pergunta do visitante: ${pergunta}`;
-      const resposta = await window.claude.complete(prompt);
-      if (resposta && typeof resposta === 'string') return resposta;
+      const resp = await fetch(URL_METEORINHO, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pergunta, contexto: montarContexto(dados, info) }),
+        signal: controle.signal,
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data?.resposta && typeof data.resposta === 'string') return data.resposta;
+      }
     } catch {
-      // Se a API falhar, caímos no cérebro local logo abaixo
+      // rede caiu, timeout, CORS, etc. → usamos o cérebro local abaixo
+    } finally {
+      clearTimeout(relogio);
     }
   }
   return respostaLocal(pergunta, dados, info);
