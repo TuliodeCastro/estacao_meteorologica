@@ -38,10 +38,11 @@ export default function Hero({ statusSistema, timestampLeitura, agoraEpoch, cond
         )}
       </div>
 
-      {/* Aviso discreto só quando o sistema está realmente offline */}
-      {statusSistema === 'offline' && (
+      {/* Aviso discreto sempre que não há dados novos (offline ou aguardando).
+          Útil nas seções que não têm o painel de aviso (Meteorinho, Gráficos). */}
+      {statusSistema !== 'online' && (
         <p className="mt-3 text-sm font-medium text-red-200/90">
-          ⚠️ Sem sinal do receptor no momento — mostrando os últimos dados recebidos.
+          ⚠️ Sem dados novos da estação no momento.
         </p>
       )}
     </header>

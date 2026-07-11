@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import Hero from './components/Hero.jsx';
 import PainelCards from './components/PainelCards.jsx';
+import AvisoDesconectado from './components/AvisoDesconectado.jsx';
 import ComoFunciona from './components/ComoFunciona.jsx';
 import Meteorinho from './components/Meteorinho.jsx';
 import Graficos from './components/Graficos.jsx';
@@ -73,7 +74,7 @@ export default function App() {
 
       {/* Modo descanso — cobre tudo; qualquer toque sai dele
           (o useInatividade detecta o toque e "inativo" vira false) */}
-      {inativo && <ModoAtrativo dados={dados} condicao={condicao} />}
+      {inativo && <ModoAtrativo dados={dados} condicao={condicao} status={statusSistema} />}
 
       {/* Botão Início — SEMPRE visível, no canto superior esquerdo */}
       <button
@@ -97,7 +98,18 @@ export default function App() {
         <div className="mt-4 space-y-10">
           {secaoAtiva === 'agora' && (
             <div className="animate-aparecer">
-              <PainelCards dados={dados} />
+              {/* Se o receptor caiu ou os sensores pararam de enviar, mostra
+                  um AVISO no lugar dos dados atrasados (nunca "dado velho"
+                  disfarçado de atual). Só mostra os cards quando online. */}
+              {statusSistema === 'online' ? (
+                <PainelCards dados={dados} />
+              ) : (
+                <AvisoDesconectado
+                  status={statusSistema}
+                  timestampLeitura={timestampLeitura}
+                  agoraEpoch={agoraEpoch}
+                />
+              )}
             </div>
           )}
 

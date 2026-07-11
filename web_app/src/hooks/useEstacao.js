@@ -23,8 +23,9 @@ const MAXIMO_PONTOS_HISTORICO = 120;
 const SEGUNDOS_HEARTBEAT_OFFLINE = 45;
 
 // Como o ciclo de medição é de ~5 min, só alarmamos "aguardando
-// sensores" depois de ~6,5 min sem leitura nova (tolera 1 ciclo perdido).
-const SEGUNDOS_SEM_LEITURA_AGUARDANDO = 390;
+// sensores" depois de ~12 min sem leitura nova. Assim toleramos 1 pacote
+// LoRa perdido sem esconder os dados; 2+ ciclos parados = nó provavelmente fora.
+const SEGUNDOS_SEM_LEITURA_AGUARDANDO = 12 * 60;
 
 // Se o TOTEM perder o Firebase por mais de 2 min, forçamos reconexão.
 const MS_DESCONECTADO_PARA_RECONECTAR = 2 * 60 * 1000;

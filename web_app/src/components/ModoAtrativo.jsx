@@ -5,12 +5,17 @@
 // para atrair os visitantes que passam perto. 👋
 // ============================================================
 import { useEffect, useState } from 'react';
-import { formatarNumero, grausParaDirecao, INFO_CONDICAO } from '../utils/clima.js';
+import {
+  formatarNumero,
+  grausParaDirecao,
+  INFO_CONDICAO,
+  INFO_DESCONEXAO,
+} from '../utils/clima.js';
 
 // Troca de destaque a cada 6 segundos
 const INTERVALO_ROTACAO = 6000;
 
-export default function ModoAtrativo({ dados, condicao }) {
+export default function ModoAtrativo({ dados, condicao, status }) {
   const [indice, setIndice] = useState(0);
 
   // Lista de destaques que vão se alternando na tela
@@ -38,6 +43,22 @@ export default function ModoAtrativo({ dados, condicao }) {
 
   const destaque = destaques[indice % destaques.length];
   const info = INFO_CONDICAO[condicao] ?? INFO_CONDICAO.noite;
+
+  // Se o sistema não está online, o descanso mostra o AVISO (não os dados
+  // atrasados em fonte gigante), mantendo o convite para tocar.
+  if (status && status !== 'online') {
+    const aviso = INFO_DESCONEXAO[status] ?? INFO_DESCONEXAO.offline;
+    return (
+      <div className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8 px-6 text-center text-white">
+        <p className="animate-pulso-suave text-8xl sm:text-9xl">{aviso.emoji}</p>
+        <p className="text-4xl font-black sm:text-5xl">{aviso.titulo}</p>
+        <p className="max-w-xl text-xl text-white/80 sm:text-2xl">{aviso.texto}</p>
+        <p className="animate-pulso-suave vidro rounded-full px-8 py-5 text-2xl font-black sm:text-3xl">
+          👋 Toque na tela para explorar!
+        </p>
+      </div>
+    );
+  }
 
   return (
     // Qualquer toque é capturado pelo App (que fecha este modo)

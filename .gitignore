@@ -72,3 +72,7 @@ htmlcov/
 *.backup
 *~
 #*#
+
+# --- Backend / deploy caches (apenas local, nunca versionar) ---
+.wrangler/
+.firebase/

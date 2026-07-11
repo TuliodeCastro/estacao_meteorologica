@@ -76,6 +76,28 @@ export const INFO_STATUS = {
 };
 
 /**
+ * Mensagens de aviso mostradas NO LUGAR dos dados quando o sistema
+ * não está enviando leituras novas. Distingue os dois problemas:
+ * - offline    : o RECEPTOR (heartbeat) caiu — nada chega ao Firebase
+ * - aguardando : o receptor está no ar, mas o NÓ DOS SENSORES no campo
+ *                parou de enviar leituras
+ */
+export const INFO_DESCONEXAO = {
+  offline: {
+    emoji: '📡',
+    titulo: 'Receptor fora do ar',
+    texto:
+      'Perdemos o contato com o receptor da estação. Ele pode estar desligado, sem energia ou sem internet no momento.',
+  },
+  aguardando: {
+    emoji: '🌡️',
+    titulo: 'Sensores sem enviar dados',
+    texto:
+      'O receptor está no ar, mas os sensores no campo pararam de enviar leituras. Eles podem estar em manutenção ou sem energia solar.',
+  },
+};
+
+/**
  * Descreve, de forma amigável, há quanto tempo algo aconteceu.
  * @param {number} epochSegundos - momento do evento (epoch em segundos)
  * @param {number} agoraEpoch    - "agora" (epoch em segundos)
