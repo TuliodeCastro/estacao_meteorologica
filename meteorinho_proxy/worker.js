@@ -7,10 +7,12 @@
 // Deploy e segredo: veja o README.md desta pasta.
 // ============================================================
 
-// Modelo da NVIDIA (troque aqui se quiser outro).
-// Rápido e barato: 'meta/llama-3.1-8b-instruct'
-// Mais capaz:      'meta/llama-3.3-70b-instruct'
-const MODELO = 'meta/llama-3.3-70b-instruct';
+// Modelo da NVIDIA. Escolhido para TOTEM: prioriza baixa latência
+// (respostas em poucos segundos) com bom português para frases curtas.
+//   Rápido (escolhido): 'meta/llama-3.1-8b-instruct'
+//   Alternativa multilíngue: 'mistralai/mistral-nemo-12b-instruct'
+//   Mais capaz, porém LENTO demais p/ totem: 'meta/llama-3.3-70b-instruct'
+const MODELO = 'meta/llama-3.1-8b-instruct';
 
 // Endpoint compatível com OpenAI da NVIDIA
 const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
