@@ -16,8 +16,8 @@ const float PI_CONST = 3.14159265;
 const int   RAIO     = 147;   // raio do anemômetro (mm)
 
 // ─── Tempos do Caminho C ─────────────────────────────────────────
-const unsigned long JANELA_ATIVA = 12000UL;  // 2 min amostrando
-const uint64_t      TEMPO_SONO   = 18e6;     // 3 min em deep sleep (µs)
+const unsigned long JANELA_ATIVA = 120000UL;  // 2 min amostrando
+const uint64_t      TEMPO_SONO   = 180e6;     // 3 min em deep sleep (µs)
 
 // Sub-intervalos de amostragem dentro da janela ativa
 const unsigned long AMOSTRA_BME_MS = 5000;  // BME280 a cada 5 s
