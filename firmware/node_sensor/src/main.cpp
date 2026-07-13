@@ -16,8 +16,8 @@ const float PI_CONST = 3.14159265;
 const int   RAIO     = 147;   // raio do anemômetro (mm)
 
 // ─── Tempos do Caminho C ─────────────────────────────────────────
-const unsigned long JANELA_ATIVA = 120000UL;  // 2 min amostrando
-const uint64_t       TEMPO_SONO   = 180e6;     // 3 min em deep sleep (µs)
+const unsigned long JANELA_ATIVA = 12000UL;  // 2 min amostrando
+const uint64_t      TEMPO_SONO   = 18e6;     // 3 min em deep sleep (µs)
 
 // Sub-intervalos de amostragem dentro da janela ativa
 const unsigned long AMOSTRA_BME_MS = 5000;  // BME280 a cada 5 s
@@ -26,15 +26,15 @@ const unsigned long AMOSTRA_IRR_MS = 5000;  // irradiância a cada 5 s
 const unsigned long JANELA_RAJADA  = 3000;  // janela de rajada = 3 s (norma WMO)
 
 // ─── Piranômetro ─────────────────────────────────────────────────
-const float CAL_WM2_POR_MV = 5.0; 
+const float CAL_WM2_POR_MV = 5.0; // TROQUE pelo valor do seu certificado!
 
 // ─── Pluviômetro ─────────────────────────────────────────────────
-const int   REED         = 14;   // D5 = GPIO14
+const int   REED         = 14;   // D5 = GPIO14 (Seguro - Mantido)
 const float MM_POR_PULSO = 0.25;
 volatile unsigned int reedCount = 0;
 
-// ─── Anemômetro (por ISR no D3 = GPIO0) ──────────────────────────
-const int HALL = 0;  // D3 = GPIO0  (D0 foi liberado para o RST/wake-up)
+// ─── Anemômetro (por ISR no D2 = GPIO4) ──────────────────────────
+const int HALL = 4;   // D2 = GPIO4 (Seguro - Remanejado)
 volatile unsigned int hallCountTotal   = 0; // pulsos na janela inteira
 volatile unsigned int hallCountRajada  = 0; // pulsos na sub-janela de 3 s
 
@@ -127,7 +127,10 @@ void setup() {
 
   Serial.begin(115200);
   loraSerial.begin(9600);
-  Wire.begin(4, 5); // SDA=D2, SCL=D1
+  
+  // I2C Remanejado para os pinos de boot (D3 e D4)
+  // Eles possuem pull-up físico dos módulos BME e ADS, o que garante o boot perfeito.
+  Wire.begin(0, 2); // SDA=D3(GPIO0), SCL=D4(GPIO2)
 
   Serial.println("\n=== ACORDOU — iniciando janela ativa ===");
 
@@ -138,7 +141,7 @@ void setup() {
     Serial.println("ADS1115 não encontrado!");
   }
 
-  // Pluviômetro e anemômetro com interrupção
+  // Pluviômetro e anemômetro com interrupção em pinos 100% seguros
   pinMode(REED, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(REED), contaPulsoPluvio, FALLING);
 
@@ -257,7 +260,7 @@ void setup() {
   Serial.println(payload);
 
   // Tempo para o LoRa terminar de transmitir antes de dormir
-  delay(200);
+  delay(500);
 
   // ── Deep sleep ──────────────────────────────────────────────────
   Serial.println("=== DORMINDO por 3 minutos ===\n");
