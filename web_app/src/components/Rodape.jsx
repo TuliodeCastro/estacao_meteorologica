@@ -17,8 +17,9 @@ export default function Rodape() {
         </div>
 
         <p className="text-base font-semibold leading-relaxed text-white/90 sm:text-lg">
-          Desenvolvido por <strong>Altamiro Marcos Ferreira Neto</strong> e{' '}
-          <strong>Túlio Leandro de Castro</strong>
+          Desenvolvido por <strong>Altamiro Marcos Ferreira Neto</strong>,{' '}
+          <strong>Túlio Leandro de Castro</strong> e{' '}
+          <strong>Gustavo de Oliveira Morais</strong>
         </p>
         <p className="mt-1 text-sm font-medium text-white/70 sm:text-base">
           Departamento de Engenharia de Controle e Automação — UFOP

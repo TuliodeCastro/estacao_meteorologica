@@ -6,7 +6,8 @@ desenvolvida por estudantes de **Engenharia de Controle e Automação da UFOP**.
 Projetado para rodar em **totem interativo com tela touch** (orientação
 vertical), além de TVs e dispositivos móveis.
 
-> Desenvolvido por **Altamiro Marcos Ferreira Neto** e **Túlio Leandro de Castro**
+> Desenvolvido por **Altamiro Marcos Ferreira Neto**, **Túlio Leandro de Castro**
+> e **Gustavo de Oliveira Morais**
 > Departamento de Engenharia de Controle e Automação — UFOP
 
 ---
