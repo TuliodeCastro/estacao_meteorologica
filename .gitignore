@@ -88,6 +88,7 @@ htmlcov/
 
 # Pastas de saída (geralmente não versionamos Gerber ou PDFs gerados)
 gerber/
+.history/
 
 # Pastas de cache do KiCad
 .cache/
