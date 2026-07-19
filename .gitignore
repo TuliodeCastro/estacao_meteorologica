@@ -76,3 +76,18 @@ htmlcov/
 # --- Backend / deploy caches (apenas local, nunca versionar) ---
 .wrangler/
 .firebase/
+
+# Arquivos de backup e temporários
+*.kicad_sch-bak
+*.kicad_pcb-bak
+*.tmp
+*-bak
+*.rpt
+*.pos
+*.kicad_prl
+
+# Pastas de saída (geralmente não versionamos Gerber ou PDFs gerados)
+gerber/
+
+# Pastas de cache do KiCad
+.cache/
