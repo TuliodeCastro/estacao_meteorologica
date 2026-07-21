@@ -22,11 +22,6 @@ const MAXIMO_PONTOS_HISTORICO = 120;
 // (tolera a perda de ~2 heartbeats antes de alarmar).
 const SEGUNDOS_HEARTBEAT_OFFLINE = 45;
 
-// Como o ciclo de medição é de ~5 min, só alarmamos "aguardando
-// sensores" depois de ~12 min sem leitura nova. Assim toleramos 1 pacote
-// LoRa perdido sem esconder os dados; 2+ ciclos parados = nó provavelmente fora.
-const SEGUNDOS_SEM_LEITURA_AGUARDANDO = 12 * 60;
-
 // Se o TOTEM perder o Firebase por mais de 2 min, forçamos reconexão.
 const MS_DESCONECTADO_PARA_RECONECTAR = 2 * 60 * 1000;
 
@@ -125,10 +120,9 @@ export function useEstacao() {
     };
   }, []);
 
-  // ---- Calcula o status do sistema (3 estados) ----
+  // ---- Calcula o status do sistema (online / offline) ----
   const statusSistema = calcularStatus({
     status,
-    timestampLeitura,
     agoraEpoch,
     conectado,
     temDados: dados !== null,
@@ -138,32 +132,23 @@ export function useEstacao() {
 }
 
 /**
- * Decide entre 'online' | 'aguardando' | 'offline'.
+ * Decide entre 'online' | 'offline' — baseado só no RECEPTOR.
  *
- * A VERDADE está sempre no tempo decorrido desde o último heartbeat —
- * nunca no campo `online: true` sozinho, porque se o receptor cair ele
- * não consegue gravar `false`.
+ * A VERDADE está sempre no tempo desde o último heartbeat — nunca no campo
+ * `online: true` sozinho, porque se o receptor cair ele não grava `false`.
+ *
+ * NÃO alarmamos quando só faltam leituras dos sensores: o receptor perde
+ * pacotes do nó com frequência (LoRa), e isso é normal. A idade dos dados
+ * é comunicada pelo "Última medição há X", sem virar tela de erro.
  */
-function calcularStatus({ status, timestampLeitura, agoraEpoch, conectado, temDados }) {
+function calcularStatus({ status, agoraEpoch, conectado, temDados }) {
   const ultimoHeartbeat = Number(status?.ultimoHeartbeat);
 
-  // Fallback gracioso: firmware novo ainda não publicado (sem nó status).
-  // NÃO assumimos offline — derivamos da conexão do próprio totem.
+  // Fallback gracioso: sem nó de status → deriva da conexão do próprio totem.
   if (!ultimoHeartbeat) {
-    if (conectado && temDados) return 'online';
-    if (conectado) return 'aguardando';
-    return 'offline';
+    return conectado && temDados ? 'online' : 'offline';
   }
 
-  const segundosDesdeHeartbeat = agoraEpoch - ultimoHeartbeat;
-
-  // Receptor caiu (ou o totem perdeu o Firebase e o heartbeat "congelou")
-  if (segundosDesdeHeartbeat >= SEGUNDOS_HEARTBEAT_OFFLINE) return 'offline';
-
-  // Receptor vivo, mas os sensores estão em silêncio além do esperado
-  if (timestampLeitura && agoraEpoch - timestampLeitura > SEGUNDOS_SEM_LEITURA_AGUARDANDO) {
-    return 'aguardando';
-  }
-
-  return 'online';
+  // Receptor no ar se o heartbeat é recente; caiu se ficou velho.
+  return agoraEpoch - ultimoHeartbeat < SEGUNDOS_HEARTBEAT_OFFLINE ? 'online' : 'offline';
 }
