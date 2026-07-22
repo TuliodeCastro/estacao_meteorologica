@@ -115,10 +115,10 @@ export default function ComoFunciona() {
           <p className="text-xl font-black text-sky-200">📏 Dados com padrão profissional</p>
           <p className="mt-2 text-sm leading-relaxed text-white/80 sm:text-base">
             Nossos números não são "fotos instantâneas": são <strong>médias</strong> calculadas ao
-            longo do tempo, do mesmo jeito que as estações meteorológicas oficiais fazem, seguindo a
-            norma internacional da <strong>OMM</strong> (Organização Meteorológica Mundial). O vento,
-            por exemplo, é a média de 2 minutos — e ainda medimos a <strong>rajada</strong>, o pico
-            de vento em apenas 3 segundos, usada para alertas de tempestade! 🌬️
+            longo do tempo, do mesmo jeito que as estações meteorológicas oficiais fazem. O vento,
+            por exemplo, é a média dos últimos 2 minutos — e ainda medimos a <strong>rajada</strong>,
+            o pico de vento em apenas 3 segundos (a mesma definição usada pela{' '}
+            <strong>OMM</strong>, a Organização Meteorológica Mundial, para alertas de tempestade)! 🌬️
           </p>
         </div>
 

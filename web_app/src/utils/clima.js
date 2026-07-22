@@ -64,10 +64,9 @@ export const INFO_CONDICAO = {
 };
 
 /**
- * Aparência de cada um dos TRÊS estados do sistema.
- * - online    : receptor vivo, dados fluindo
- * - aguardando: receptor vivo, mas o transmissor está dormindo/sem dados
- * - offline   : sem heartbeat do receptor
+ * Aparência dos dois estados do sistema.
+ * - online  : receptor vivo (heartbeat recente)
+ * - offline : sem heartbeat do receptor
  */
 export const INFO_STATUS = {
   online: { emoji: '🟢', rotulo: 'Sistema Online', cor: 'bg-green-400' },
@@ -105,11 +104,34 @@ export function descreverTempoDecorrido(epochSegundos, agoraEpoch) {
 /** Formata um número com vírgula brasileira e casas fixas */
 export function formatarNumero(valor, casas = 1) {
   const numero = Number(valor);
-  if (Number.isNaN(numero)) return '—';
+  // -999 é a sentinela de "dado ausente" enviada pelo firmware (sensor
+  // sem leitura). Mostramos "—" em vez de um número sem sentido.
+  if (Number.isNaN(numero) || numero <= -900) return '—';
   return numero.toLocaleString('pt-BR', {
     minimumFractionDigits: casas,
     maximumFractionDigits: casas,
   });
+}
+
+/**
+ * Sanitiza a velocidade do vento (m/s): descarta valores implausíveis
+ * (negativos ou acima de ~50 m/s ≈ 180 km/h). Defesa em profundidade —
+ * o firmware já filtra, mas isso protege também dados antigos já gravados
+ * (ex.: os "441 km/h" espúrios do histórico). Retorna NaN se implausível.
+ */
+export function saneiaVento(ms) {
+  const n = Number(ms);
+  if (Number.isNaN(n) || n < 0 || n > 50) return NaN;
+  return n;
+}
+
+/**
+ * Valor de um sensor tratando a sentinela -999 ("ausente") como NaN.
+ * Assim o card e o gráfico mostram "—" / pulam o ponto, em vez de -999.
+ */
+export function valorSensor(x) {
+  const n = Number(x);
+  return Number.isNaN(n) || n <= -900 ? NaN : n;
 }
 
 /**
@@ -142,11 +164,11 @@ export function descricaoChuva(chuva) {
 }
 
 export function descricaoVento(velKMH) {
-  // velMS é a velocidade MÉDIA da janela (norma OMM/WMO), não um valor instantâneo.
-  if (velKMH < 2) return 'Vento quase parado — média calculada ao longo de 2 minutos (norma da OMM).';
-  if (velKMH < 12) return 'Brisa leve. Esta é a velocidade MÉDIA do vento, medida ao longo de 2 minutos conforme as normas da Organização Meteorológica Mundial (OMM).';
+  // velMS é a velocidade MÉDIA dos últimos 2 minutos (não um valor instantâneo).
+  if (velKMH < 2) return 'Vento quase parado — valor médio dos últimos 2 minutos.';
+  if (velKMH < 12) return 'Brisa leve. Este é o vento MÉDIO dos últimos 2 minutos — o pico rápido a gente chama de rajada!';
   if (velKMH < 29) return 'Vento moderado — dá para sentir no rosto e ver as folhas dançando. Valor médio dos últimos 2 minutos.';
-  return 'Ventania! Segure o chapéu! 🎩 (média da janela conforme a OMM)';
+  return 'Ventania! Segure o chapéu! 🎩 (média dos últimos 2 minutos)';
 }
 
 export function descricaoRajada(rajadaMS) {

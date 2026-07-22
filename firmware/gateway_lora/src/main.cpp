@@ -107,14 +107,29 @@ void enviarHeartbeat() {
   else { Serial.print("[Heartbeat] Erro: "); Serial.println(fbdo.errorReason()); }
 }
 
-// Arquiva a leitura no histórico (/estacao/historico/<epoch>), para o
-// site montar gráficos de 24 h / 7 dias. Um único setJSON por leitura,
-// indexado pelo horário (epoch em segundos) — assim o site consulta
-// faixas de tempo direto com orderByKey/startAt.
-void arquivarHistorico(float temp, float pres, float umid, int pulsos,
-                       float chuva, float velMS, float rajada,
-                       int dir, float irrad, time_t agora) {
-  if (!firebaseIniciado || !Firebase.ready() || WiFi.status() != WL_CONNECTED) return;
+// QC final antes de gravar (defesa em profundidade — o nó já filtra, mas
+// o gateway garante que nenhuma rajada espúria chegue ao banco).
+void qcVento(float &velMS, float &rajada) {
+  const float LIMITE = 50.0;   // ~180 km/h: acima disso é impossível aqui
+  const float FATOR  = 3.0;    // rajada plausível é no máx ~3x a média
+  if (velMS > LIMITE || velMS < 0) velMS = 0;
+  if (rajada > LIMITE || (velMS > 0.5 && rajada > velMS * FATOR)) rajada = velMS;
+  if (rajada < velMS) rajada = velMS;
+}
+
+// Grava a leitura em /estacao/leituras E em /estacao/historico/<epoch>.
+// UM setJSON por destino (rápido → menos tempo "surdo" ao LoRa; e o site
+// recebe a leitura completa num evento só, não vários eventos parciais).
+void enviarFirebase(float temp, float pres, float umid, int pulsos,
+                    float chuva, float velMS, float rajada,
+                    int dir, float irrad) {
+  if (!firebaseIniciado || !Firebase.ready() || WiFi.status() != WL_CONNECTED) {
+    Serial.println("[Firebase] Não pronto — pulando envio.");
+    return;
+  }
+
+  qcVento(velMS, rajada);
+  time_t agora = time(nullptr);
 
   FirebaseJson json;
   json.set("temp",      temp);
@@ -129,41 +144,14 @@ void arquivarHistorico(float temp, float pres, float umid, int pulsos,
   json.set("irrad",     irrad);
   json.set("timestamp", (int)agora);
 
+  if (Firebase.RTDB.setJSON(&fbdo, "/estacao/leituras", &json))
+    Serial.println("[Firebase] Dados enviados!");
+  else { Serial.print("[Firebase] Erro: "); Serial.println(fbdo.errorReason()); }
+
   String path = "/estacao/historico/" + String((uint32_t)agora);
   if (Firebase.RTDB.setJSON(&fbdo, path, &json))
     Serial.println("[Historico] Registro arquivado!");
   else { Serial.print("[Historico] Erro: "); Serial.println(fbdo.errorReason()); }
-}
-
-void enviarFirebase(float temp, float pres, float umid, int pulsos,
-                    float chuva, float velMS, float rajada,
-                    int dir, float irrad) {
-  if (!firebaseIniciado || !Firebase.ready() || WiFi.status() != WL_CONNECTED) {
-    Serial.println("[Firebase] Não pronto — pulando envio.");
-    return;
-  }
-
-  String path = "/estacao/leituras";
-  time_t agora = time(nullptr);
-
-  bool ok = true;
-  ok &= Firebase.RTDB.setFloat(&fbdo,  path + "/temp",      temp);
-  ok &= Firebase.RTDB.setFloat(&fbdo,  path + "/pres",      pres);
-  ok &= Firebase.RTDB.setFloat(&fbdo,  path + "/umid",      umid);
-  ok &= Firebase.RTDB.setInt(&fbdo,    path + "/pulsos",    pulsos);
-  ok &= Firebase.RTDB.setFloat(&fbdo,  path + "/chuva",     chuva);
-  ok &= Firebase.RTDB.setFloat(&fbdo,  path + "/velMS",     velMS);
-  ok &= Firebase.RTDB.setFloat(&fbdo,  path + "/rajada",    rajada);
-  ok &= Firebase.RTDB.setInt(&fbdo,    path + "/dir",       dir);
-  ok &= Firebase.RTDB.setString(&fbdo, path + "/direcao",   grausParaNome(dir));
-  ok &= Firebase.RTDB.setFloat(&fbdo,  path + "/irrad",     irrad);
-  ok &= Firebase.RTDB.setInt(&fbdo,    path + "/timestamp", (int)agora);
-
-  if (ok) Serial.println("[Firebase] Dados enviados!");
-  else { Serial.print("[Firebase] Erro: "); Serial.println(fbdo.errorReason()); }
-
-  // Também guarda no histórico (indexado pelo horário da leitura)
-  arquivarHistorico(temp, pres, umid, pulsos, chuva, velMS, rajada, dir, irrad, agora);
 }
 
 // Ordem CSV: temp,pres,umid,pulsos,chuva,velMS,rajada,dir,irrad
@@ -257,6 +245,19 @@ void setup() {
   }
 }
 
+// Ignora retransmissões: o nó envia o mesmo pacote 2x seguidas. Se a linha
+// for idêntica à última processada há poucos segundos, é cópia — descarta.
+bool ehDuplicata(const char* linha) {
+  static char ultima[200] = "";
+  static unsigned long ultimaMs = 0;
+  unsigned long agora = millis();
+  if (strcmp(linha, ultima) == 0 && (agora - ultimaMs) < 30000) return true;
+  strncpy(ultima, linha, sizeof(ultima) - 1);
+  ultima[sizeof(ultima) - 1] = '\0';
+  ultimaMs = agora;
+  return false;
+}
+
 void loop() {
   garantirWifi();
 
@@ -279,7 +280,11 @@ void loop() {
       rxBuffer[rxPos] = '\0';
 
       if (rxPos > 0 && strchr(rxBuffer, '*') != NULL) {
-        processarMensagem(rxBuffer);
+        if (ehDuplicata(rxBuffer)) {
+          Serial.println("[Dedup] Retransmissão ignorada.");
+        } else {
+          processarMensagem(rxBuffer);
+        }
       } else if (rxPos > 0) {
         Serial.print("[IGNORADA] ");
         Serial.println(rxBuffer);

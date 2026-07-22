@@ -9,17 +9,28 @@ import { useEffect, useRef, useState } from 'react';
 const DURACAO_MS = 800;
 
 export function useValorAnimado(valorFinal) {
-  const numeroFinal = Number(valorFinal) || 0;
+  const numeroFinal = Number(valorFinal);
   const [valorExibido, setValorExibido] = useState(numeroFinal);
   const animacao = useRef(null);
   const valorAtual = useRef(numeroFinal);
 
   useEffect(() => {
-    const inicio = valorAtual.current;
+    // Valor inválido/ausente (NaN) → mostra direto (o formatador exibe "—"),
+    // sem tentar animar.
+    if (!Number.isFinite(numeroFinal)) {
+      valorAtual.current = numeroFinal;
+      setValorExibido(numeroFinal);
+      return undefined;
+    }
+
+    const inicio = Number.isFinite(valorAtual.current) ? valorAtual.current : numeroFinal;
     const delta = numeroFinal - inicio;
 
     // Sem mudança → nada a animar
-    if (delta === 0) return undefined;
+    if (delta === 0) {
+      setValorExibido(numeroFinal);
+      return undefined;
+    }
 
     const comecou = performance.now();
 

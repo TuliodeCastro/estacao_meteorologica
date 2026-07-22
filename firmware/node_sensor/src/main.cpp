@@ -25,6 +25,11 @@ const unsigned long AMOSTRA_DIR_MS = 5000;  // direção a cada 5 s
 const unsigned long AMOSTRA_IRR_MS = 5000;  // irradiância a cada 5 s
 const unsigned long JANELA_RAJADA  = 3000;  // janela de rajada = 3 s (norma WMO)
 
+// ─── Controle de qualidade (rejeição de outliers) ────────────────
+const float LIMITE_VENTO_MS  = 50.0;   // acima de ~180 km/h é impossível aqui
+const float FATOR_RAJADA_MAX = 3.0;    // rajada plausível é no máx ~3x a média
+const float AUSENTE          = -999.0; // sentinela p/ leitura indisponível
+
 // ─── Piranômetro ─────────────────────────────────────────────────
 const float CAL_WM2_POR_MV = 5.0; // TROQUE pelo valor do seu certificado!
 
@@ -216,15 +221,28 @@ void setup() {
   // ── Fim da janela — calcula resultados ──────────────────────────
   unsigned long duracao = millis() - inicioJanela;
 
-  float temperatura = (nBme > 0) ? somaTemp / nBme : 0;
-  float pressao     = (nBme > 0) ? somaPres / nBme : 0;
-  float umidade     = (nBme > 0) ? somaUmid / nBme : 0;
+  // Se o BME não leu nada na janela, marca como AUSENTE (não como 0!),
+  // seguindo o princípio da OMM de sinalizar dado faltante.
+  float temperatura = (nBme > 0) ? somaTemp / nBme : AUSENTE;
+  float pressao     = (nBme > 0) ? somaPres / nBme : AUSENTE;
+  float umidade     = (nBme > 0) ? somaUmid / nBme : AUSENTE;
 
   noInterrupts();
   unsigned int pulsosVento = hallCountTotal;
   unsigned int pulsosChuva = reedCount;
   interrupts();
   float velMedia = pulsosParaMS(pulsosVento, duracao);
+
+  // ── QC do vento: descarta surtos espúrios do anemômetro ──────────
+  // O sensor Hall pode gerar rajadas de pulsos falsos (repique/EMI) que
+  // inflam a rajada para valores impossíveis (já medimos "441 km/h"!).
+  // Rejeitamos rajada acima do limite físico OU muito maior que a média.
+  if (velMedia > LIMITE_VENTO_MS) velMedia = 0;  // média impossível → descarta
+  if (rajadaMax > LIMITE_VENTO_MS ||
+      (velMedia > 0.5 && rajadaMax > velMedia * FATOR_RAJADA_MAX)) {
+    rajadaMax = velMedia;                          // rajada espúria → usa a média
+  }
+  if (rajadaMax < velMedia) rajadaMax = velMedia;  // rajada nunca < média
 
   float chuva = pulsosChuva * MM_POR_PULSO;
 
@@ -235,7 +253,7 @@ void setup() {
     dirMedia = ((int)round(ang / 45.0) * 45) % 360;
   }
 
-  float irradiancia = (nIrr > 0) ? somaIrr / nIrr : 0;
+  float irradiancia = (nIrr > 0) ? somaIrr / nIrr : AUSENTE;
 
   // ── Monta e envia o pacote CSV ──────────────────────────────────
   String payload = montarCSV(temperatura, pressao, umidade,
@@ -243,6 +261,11 @@ void setup() {
                              velMedia, rajadaMax,
                              dirMedia, irradiancia);
 
+  // Envia 2x com um pequeno intervalo. Se o gateway perder o 1º pacote
+  // (ex.: ocupado gravando no Firebase), o 2º recupera. O gateway
+  // deduplica pelo conteúdo, então a leitura é gravada uma única vez.
+  loraSerial.println(payload);
+  delay(250);
   loraSerial.println(payload);
 
   // ── Relatório no Serial ─────────────────────────────────────────

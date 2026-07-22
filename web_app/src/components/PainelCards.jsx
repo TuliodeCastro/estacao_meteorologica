@@ -18,6 +18,8 @@ import { useValorAnimado } from '../hooks/useValorAnimado.js';
 import {
   formatarNumero,
   grausParaDirecao,
+  saneiaVento,
+  valorSensor,
   descricaoTemperatura,
   descricaoUmidade,
   descricaoPressao,
@@ -95,24 +97,31 @@ export default function PainelCards({ dados }) {
     return (
       <div className="vidro mx-4 rounded-3xl p-10 text-center text-white">
         <p className="animate-brilho text-3xl font-bold">📡 Conectando à estação…</p>
-        <p className="mt-2 text-lg text-white/70">Os dados chegam pelo rádio LoRa a cada 2 minutos.</p>
+        <p className="mt-2 text-lg text-white/70">Os dados chegam pelo rádio LoRa a cada ~5 minutos.</p>
       </div>
     );
   }
 
-  const temp = Number(dados.temp) || 0;
-  const umid = Number(dados.umid) || 0;
-  const pres = Number(dados.pres) || 0;
-  const chuva = Number(dados.chuva) || 0;
-  const velMS = Number(dados.velMS) || 0; // velocidade MÉDIA (norma OMM)
-  const rajadaMS = Number(dados.rajada) || 0; // pico de 3 s (NOVO)
+  // valorSensor → NaN se for a sentinela -999 (dado ausente) → card mostra "—".
+  // saneiaVento → NaN se o vento for implausível (protege até de dados antigos).
+  const temp = valorSensor(dados.temp);
+  const umid = valorSensor(dados.umid);
+  const pres = valorSensor(dados.pres);
+  const chuva = valorSensor(dados.chuva);
+  const velMS = saneiaVento(dados.velMS); // velocidade MÉDIA (2 min)
+  const rajadaMS = saneiaVento(dados.rajada); // pico de 3 s
   const dir = Number(dados.dir) || 0;
-  const irrad = Number(dados.irrad) || 0;
+  const irrad = valorSensor(dados.irrad);
   const direcaoTexto = dados.direcao || grausParaDirecao(dir);
 
   // km/h não vem mais pronto do firmware — calculamos a partir de m/s
+  // (NaN se o vento for inválido → o card exibe "—")
   const velKMH = velMS * 3.6;
   const rajadaKMH = rajadaMS * 3.6;
+  // Valores seguros só para alimentar os ícones SVG (evita NaN no desenho)
+  const tempIcone = Number.isFinite(temp) ? temp : 20;
+  const presIcone = Number.isFinite(pres) ? pres : 890;
+  const velIcone = Number.isFinite(velKMH) ? velKMH : 0;
 
   return (
     <section className="grid grid-cols-1 gap-4 px-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -120,11 +129,11 @@ export default function PainelCards({ dados }) {
         indice={0}
         cor="#fb7185"
         titulo="Temperatura"
-        icone={<IconeTermometro temperatura={temp} />}
+        icone={<IconeTermometro temperatura={tempIcone} />}
         valor={temp}
         casas={1}
         unidade="°C"
-        descricao={descricaoTemperatura(temp)}
+        descricao={Number.isFinite(temp) ? descricaoTemperatura(temp) : 'Sensor sem leitura no momento. 🔧'}
       />
       <Card
         indice={1}
@@ -134,13 +143,13 @@ export default function PainelCards({ dados }) {
         valor={umid}
         casas={0}
         unidade="%"
-        descricao={descricaoUmidade(umid)}
+        descricao={Number.isFinite(umid) ? descricaoUmidade(umid) : 'Sensor sem leitura no momento. 🔧'}
       />
       <Card
         indice={2}
         cor="#a78bfa"
         titulo="Pressão"
-        icone={<IconePressao pressao={pres} />}
+        icone={<IconePressao pressao={presIcone} />}
         valor={pres}
         casas={1}
         unidade="hPa"
@@ -154,18 +163,18 @@ export default function PainelCards({ dados }) {
         valor={chuva}
         casas={1}
         unidade="mm"
-        descricao={descricaoChuva(chuva)}
+        descricao={Number.isFinite(chuva) ? descricaoChuva(chuva) : 'Sensor sem leitura no momento. 🔧'}
       />
       <Card
         indice={4}
         cor="#fbbf24"
         titulo="Vento médio"
-        icone={<IconeCatavento velocidadeKMH={velKMH} />}
+        icone={<IconeCatavento velocidadeKMH={velIcone} />}
         valor={velKMH}
         casas={1}
         unidade="km/h"
-        extra={`${formatarNumero(velMS)} m/s · média de 2 min (OMM)`}
-        descricao={descricaoVento(velKMH)}
+        extra={`${formatarNumero(velMS)} m/s · média de 2 min`}
+        descricao={descricaoVento(Number.isFinite(velKMH) ? velKMH : 0)}
       />
       <Card
         indice={5}
@@ -195,7 +204,7 @@ export default function PainelCards({ dados }) {
         valor={irrad}
         casas={0}
         unidade="W/m²"
-        descricao={descricaoIrradiancia(irrad)}
+        descricao={Number.isFinite(irrad) ? descricaoIrradiancia(irrad) : 'Sensor sem leitura no momento. 🔧'}
       />
     </section>
   );

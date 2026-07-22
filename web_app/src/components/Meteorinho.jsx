@@ -52,7 +52,7 @@ function montarContexto(dados, info) {
     `umidade: ${formatarNumero(dados.umid, 0)} %`,
     `pressão: ${formatarNumero(dados.pres)} hPa`,
     `chuva acumulada: ${formatarNumero(dados.chuva)} mm`,
-    `velocidade MÉDIA do vento (média de 2 min, norma OMM): ${formatarNumero(velMS)} m/s (${formatarNumero(velKMH)} km/h)`,
+    `velocidade MÉDIA do vento (média dos últimos 2 min): ${formatarNumero(velMS)} m/s (${formatarNumero(velKMH)} km/h)`,
     `rajada (pico de 3 s): ${formatarNumero(dados.rajada)} m/s`,
     `direção do vento: ${dados.direcao || grausParaDirecao(dados.dir)} (${formatarNumero(dados.dir, 0)}°)`,
     `irradiância solar: ${formatarNumero(dados.irrad, 0)} W/m²`,
@@ -106,7 +106,7 @@ function respostaLocal(pergunta, dados, info) {
     return `A rajada é o PICO de vento em apenas 3 segundos — agora está em ${formatarNumero(d.rajada)} m/s! 🌬️ Ela é sempre maior que a velocidade média. Os meteorologistas ficam de olho na rajada porque é ela que derruba galhos e telhados nas tempestades, mesmo quando a média parece tranquila!`;
   }
   if (p.includes('vento') || p.includes('anemômetro') || p.includes('anemometro')) {
-    return `O vento médio está a ${formatarNumero(velKMH)} km/h (${formatarNumero(velMS)} m/s), vindo de ${d.direcao || grausParaDirecao(d.dir)}! 💨 Medimos com um anemômetro de conchas que gira com o vento. Mas atenção: esse valor é a MÉDIA de 2 minutos, do jeito que as estações profissionais fazem (norma da OMM). O pico rápido a gente chama de rajada!`;
+    return `O vento médio está a ${formatarNumero(velKMH)} km/h (${formatarNumero(velMS)} m/s), vindo de ${d.direcao || grausParaDirecao(d.dir)}! 💨 Medimos com um anemômetro de conchas que gira com o vento. Mas atenção: esse valor é a MÉDIA dos últimos 2 minutos (não uma foto instantânea). O pico rápido a gente chama de rajada!`;
   }
   if (
     p.includes('dorme') || p.includes('cochil') || p.includes('sono') || p.includes('deep sleep') ||

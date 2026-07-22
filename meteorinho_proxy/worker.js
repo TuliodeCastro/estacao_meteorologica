@@ -46,7 +46,7 @@ COMO RESPONDER
 
 O QUE VOCÊ SABE
 - Sensores: temperatura, umidade, pressão (barômetro), chuva (pluviômetro de báscula, que conta 0,25 mm por "tic"), vento (anemômetro de conchas) e irradiância solar (piranômetro).
-- Vento: a velocidade é a MÉDIA de 2 minutos, seguindo a norma internacional da OMM; a "rajada" é o PICO de vento em apenas 3 segundos — sempre maior que a média.
+- Vento: a velocidade é a MÉDIA dos últimos 2 minutos (não uma foto instantânea); a "rajada" é o PICO de vento em apenas 3 segundos — sempre maior que a média (essa definição de rajada de 3 s segue a OMM).
 - Em Ouro Preto a pressão é naturalmente mais baixa que no litoral por causa da altitude (~1.179 m).
 
 REGRAS IMPORTANTES

@@ -6,9 +6,26 @@
 // ============================================================
 import { get, orderByKey, query, ref, startAt } from 'firebase/database';
 import { bancoDados } from './firebase.js';
+import { saneiaVento, valorSensor } from './utils/clima.js';
 
 // Máximo de pontos desenhados no gráfico (totem tem hardware modesto).
 const MAX_PONTOS_GRAFICO = 180;
+
+// Sanitiza um registro do histórico: valores implausíveis viram null, que o
+// Recharts desenha como "buraco" na linha (em vez de picos absurdos ou -999).
+// Protege os gráficos até dos dados ruins JÁ gravados (ex.: os "441 km/h").
+function saneiaRegistro(v) {
+  const s = { ...v };
+  const vento = saneiaVento(v.velMS);
+  const raj = saneiaVento(v.rajada);
+  s.velMS = Number.isFinite(vento) ? vento : null;
+  s.rajada = Number.isFinite(raj) ? raj : null;
+  ['temp', 'pres', 'umid', 'irrad', 'chuva'].forEach((k) => {
+    const n = valorSensor(v[k]);
+    s[k] = Number.isFinite(n) ? n : null;
+  });
+  return s;
+}
 
 /**
  * Busca as medições dos últimos `janelaSegundos`.
@@ -41,7 +58,7 @@ export async function buscarHistorico(janelaSegundos, incluirData = false) {
             minute: '2-digit',
           })
         : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      return { epoch: Number(epoch), hora, ...v };
+      return { epoch: Number(epoch), hora, ...saneiaRegistro(v) };
     })
     .sort((a, b) => a.epoch - b.epoch);
 
