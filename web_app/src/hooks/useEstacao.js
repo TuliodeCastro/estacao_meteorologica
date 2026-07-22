@@ -47,6 +47,11 @@ export function useEstacao() {
   // Marca quando o totem ficou sem conexão (para a vigia de reconexão)
   const momentoDesconectado = useRef(null);
 
+  // Timestamp da última leitura JÁ processada. O gateway grava a leitura
+  // campo a campo (temp, pres, umid...), então o onValue dispara várias
+  // vezes por leitura; usamos isto para tratar cada leitura UMA só vez.
+  const ultimoTimestampLeitura = useRef(null);
+
   useEffect(() => {
     // ---- Escuta as leituras da estação em tempo real ----
     const referenciaLeituras = ref(bancoDados, 'estacao/leituras');
@@ -56,9 +61,17 @@ export function useEstacao() {
 
       const agora = new Date();
       // timestamp vem do firmware novo (epoch s); se não vier, usamos
-      // o horário de chegada do evento como aproximação.
+      // o horário de chegada do evento (em segundos) como aproximação.
       const epochLeitura =
         Number(valores.timestamp) || Math.floor(agora.getTime() / 1000);
+
+      // Só é leitura NOVA se o timestamp mudou. Os disparos intermediários
+      // (um por campo gravado pelo gateway) carregam o timestamp antigo e
+      // são ignorados — senão o gráfico da sessão ganharia vários pontos
+      // para uma única leitura.
+      if (epochLeitura === ultimoTimestampLeitura.current) return;
+      ultimoTimestampLeitura.current = epochLeitura;
+
       setTimestampLeitura(epochLeitura);
       setDados(valores);
 
