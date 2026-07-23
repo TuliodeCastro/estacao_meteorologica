@@ -34,11 +34,21 @@ export async function buscarSol(janelaSegundos = 30 * 3600) {
     .sort((a, b) => a.epoch - b.epoch);
 }
 
+/** Data (YYYY-MM-DD) no fuso de Ouro Preto, para agrupar por dia */
+function dataBRT(epoch) {
+  return new Date(epoch * 1000).toLocaleDateString('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+  });
+}
+
 /**
- * Encontra os cruzamentos de limiar e devolve:
- * - nascer / por : os MAIS RECENTES (nascer de manhã, pôr de tarde)
- * - parNascer / parPor : o último DIA COMPLETO (nascer seguido do seu pôr),
- *   usado para a duração do dia e para estimar o pôr quando ainda é dia.
+ * Analisa a irradiância e devolve, por DIA:
+ * - ehDia: se AGORA é dia (baseado na última irradiância medida — sinal
+ *   direto e confiável, imune a oscilações na ordem dos cruzamentos)
+ * - nascerHoje / porHoje e nascerOntem / porOntem
+ *
+ * Por dia pegamos o PRIMEIRO nascer e o ÚLTIMO pôr: assim uma nuvem que
+ * zere a irradiância no meio do dia não vira um "pôr do sol" falso.
  */
 export function analisarSol(pontos) {
   const nasceres = [];
@@ -51,20 +61,25 @@ export function analisarSol(pontos) {
     if (anterior > LIMIAR_SOL && atual <= LIMIAR_SOL) pores.push(pontos[i].epoch);
   }
 
-  const nascer = nasceres.length ? nasceres[nasceres.length - 1] : null;
-  const por = pores.length ? pores[pores.length - 1] : null;
+  // É dia se a leitura mais recente ainda tem sol
+  const ultimo = pontos.length ? pontos[pontos.length - 1] : null;
+  const ehDia = ultimo ? ultimo.irrad > LIMIAR_SOL : false;
 
-  // Último dia completo: o pôr mais recente e o nascer que veio antes dele
-  const parPor = por;
-  let parNascer = null;
-  if (parPor) {
-    for (let i = nasceres.length - 1; i >= 0; i--) {
-      if (nasceres[i] < parPor) {
-        parNascer = nasceres[i];
-        break;
-      }
-    }
-  }
+  const agora = Math.floor(Date.now() / 1000);
+  const diaHoje = dataBRT(agora);
+  const diaOntem = dataBRT(agora - 86400);
 
-  return { nascer, por, parNascer, parPor };
+  const primeiroNascer = (dia) => nasceres.find((e) => dataBRT(e) === dia) ?? null;
+  const ultimoPor = (dia) => {
+    const doDia = pores.filter((e) => dataBRT(e) === dia);
+    return doDia.length ? doDia[doDia.length - 1] : null;
+  };
+
+  return {
+    ehDia,
+    nascerHoje: primeiroNascer(diaHoje),
+    porHoje: ultimoPor(diaHoje),
+    nascerOntem: primeiroNascer(diaOntem),
+    porOntem: ultimoPor(diaOntem),
+  };
 }
