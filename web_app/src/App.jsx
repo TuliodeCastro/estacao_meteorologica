@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import Hero from './components/Hero.jsx';
 import PainelCards from './components/PainelCards.jsx';
+import ArcoSolar from './components/ArcoSolar.jsx';
 import AvisoDesconectado from './components/AvisoDesconectado.jsx';
 import ComoFunciona from './components/ComoFunciona.jsx';
 import Meteorinho from './components/Meteorinho.jsx';
@@ -102,7 +103,10 @@ export default function App() {
                   um AVISO no lugar dos dados atrasados (nunca "dado velho"
                   disfarçado de atual). Só mostra os cards quando online. */}
               {statusSistema === 'online' ? (
-                <PainelCards dados={dados} />
+                <div className="space-y-4">
+                  <PainelCards dados={dados} />
+                  <ArcoSolar agoraEpoch={agoraEpoch} />
+                </div>
               ) : (
                 <AvisoDesconectado
                   status={statusSistema}
