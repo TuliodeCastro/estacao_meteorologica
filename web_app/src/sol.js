@@ -6,9 +6,10 @@
 import { get, orderByKey, query, ref, startAt } from 'firebase/database';
 import { bancoDados } from './firebase.js';
 
-// Acima deste valor consideramos que "tem sol" (dados reais mostram
-// noite ≈ 0 W/m² e dia chegando a centenas — 5 separa bem os dois).
-const LIMIAR_SOL = 5;
+// Acima deste valor consideramos que "tem sol". A irradiância já vem
+// clampada em ≥0 no firmware (noite = 0 exato), então 0 detecta a
+// primeira e a última réstia de luz do dia.
+const LIMIAR_SOL = 0;
 
 /**
  * Busca a irradiância das últimas horas (só irrad + horário, sem reduzir).
@@ -29,7 +30,7 @@ export async function buscarSol(janelaSegundos = 30 * 3600) {
   if (!valores) return [];
 
   return Object.entries(valores)
-    .map(([epoch, v]) => ({ epoch: Number(epoch), irrad: Number(v.irrad) || 0 }))
+    .map(([epoch, v]) => ({ epoch: Number(epoch), irrad: Math.max(Number(v.irrad) || 0, 0) }))
     .sort((a, b) => a.epoch - b.epoch);
 }
 
