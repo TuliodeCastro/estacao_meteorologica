@@ -269,18 +269,27 @@ export default function Meteorinho({ dados, statusSistema, timestampLeitura, ago
           ))}
         </div>
 
-        {/* Campo de texto + botão do teclado virtual */}
+        {/* Campo de texto — aceita o teclado FÍSICO (celular/computador),
+            com Enter para enviar. No totem (sem teclado), o botão ao lado
+            abre o teclado virtual na tela. */}
         <div className="mt-3 flex gap-2">
           <input
             type="text"
             value={texto}
-            readOnly /* a digitação acontece pelo teclado virtual */
-            onClick={() => {
-              setTecladoAberto(true);
+            onChange={(e) => {
+              setTexto(e.target.value);
               reiniciarRelogioLimpeza();
             }}
-            placeholder="Toque aqui para digitar sua pergunta…"
-            className="min-h-[52px] flex-1 rounded-2xl border border-white/25 bg-white/10 px-4 text-lg text-white placeholder-white/50 outline-none"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                enviar();
+              }
+            }}
+            onFocus={reiniciarRelogioLimpeza}
+            enterKeyHint="send"
+            placeholder="Digite sua pergunta…"
+            className="min-h-[52px] flex-1 rounded-2xl border border-white/25 bg-white/10 px-4 text-lg text-white placeholder-white/50 outline-none focus:border-amber-300/60"
           />
           <button
             type="button"
@@ -289,9 +298,19 @@ export default function Meteorinho({ dados, statusSistema, timestampLeitura, ago
               reiniciarRelogioLimpeza();
             }}
             className="tocavel min-h-[52px] min-w-[64px] rounded-2xl bg-white/15 text-2xl"
-            aria-label="Abrir teclado virtual"
+            aria-label="Mostrar teclado na tela"
+            title="Teclado na tela (para o totem)"
           >
             ⌨️
+          </button>
+          <button
+            type="button"
+            onClick={() => enviar()}
+            disabled={!texto.trim() || pensando}
+            className="tocavel min-h-[52px] min-w-[64px] rounded-2xl bg-emerald-500/70 text-lg font-bold text-white disabled:opacity-30"
+            aria-label="Enviar pergunta"
+          >
+            ➤
           </button>
         </div>
 

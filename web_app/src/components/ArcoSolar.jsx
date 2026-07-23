@@ -97,12 +97,15 @@ export default function ArcoSolar({ agoraEpoch }) {
   const fim = pontoNoArco(1);
 
   return (
-    <div className="vidro mx-auto max-w-xl rounded-3xl px-5 pt-4 pb-3 text-white">
-      <p className="text-center text-xs font-semibold uppercase tracking-[0.25em] text-white/50">
+    <div className="vidro mx-4 rounded-3xl px-5 py-4 text-white">
+      <p className="text-center text-xs font-semibold uppercase tracking-[0.25em] text-white/50 lg:text-left">
         Caminho do sol
       </p>
 
-      <svg viewBox="0 0 320 108" className="mt-1 w-full" aria-hidden="true">
+      {/* Em telas largas o arco e os números ficam lado a lado (ocupa a
+          largura toda como os cards); no celular, empilhados. */}
+      <div className="mt-1 flex flex-col items-center gap-1 lg:flex-row lg:justify-center lg:gap-14">
+      <svg viewBox="0 0 320 108" className="w-full max-w-md" aria-hidden="true">
         <defs>
           <linearGradient id="arcoGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#fbbf24" />
@@ -155,7 +158,7 @@ export default function ArcoSolar({ agoraEpoch }) {
       </svg>
 
       {/* nascer · duração · pôr — tipografia limpa, sem ícones */}
-      <div className="-mt-1 flex items-end justify-between px-1">
+      <div className="flex w-full max-w-md items-end justify-between px-1 lg:w-auto lg:gap-14">
         <div className="text-left">
           <p className="numeros-tabulares text-2xl font-black leading-none sm:text-3xl">
             {horaBRT(ehDia ? nascer : parNascer ?? nascer)}
@@ -182,6 +185,7 @@ export default function ArcoSolar({ agoraEpoch }) {
             Pôr{porEstimado ? ' · prev.' : ''}
           </p>
         </div>
+      </div>
       </div>
     </div>
   );
